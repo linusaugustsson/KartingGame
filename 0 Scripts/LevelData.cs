@@ -14,9 +14,13 @@ public class LevelData : MonoBehaviour
     public List<BoxCollider> checkPointColliders;
     public List<BoxCollider> goalCollider;
 
+    public List<GameObject> itemBoxList;
+
     public CinemachineVirtualCamera introCamera;
 
     public Sprite levelMap;
+
+    public GameObject deathZone;
 
 
 }

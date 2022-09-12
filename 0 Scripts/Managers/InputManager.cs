@@ -17,6 +17,7 @@ public class InputManager : MonoBehaviour
     public float steerVal;
     public float gas;
     public float drift;
+    public float attack;
 
     //public KartController kartController;
 
@@ -47,6 +48,11 @@ public class InputManager : MonoBehaviour
 
 
 
+    }
+
+    public void OnAttack(InputValue _value)
+    {
+        attack = _value.Get<float>();
     }
 
 

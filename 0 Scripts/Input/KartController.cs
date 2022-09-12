@@ -83,6 +83,25 @@ public class KartController : NetworkBehaviour
     public List<CharacterData> characterData = new List<CharacterData>();
     public List<GameObject> characterModels = new List<GameObject>();
 
+    private int itemEquipped = -1;
+    private float itemTimer = 0.0f;
+    private float maxItemTimer = 30.0f;
+
+
+
+    private NetworkManagerCustom networkManagerCustom;
+
+    private NetworkManagerCustom NetworkManagerCustom
+    {
+        get
+        {
+            if (networkManagerCustom != null)
+            {
+                return networkManagerCustom;
+            }
+            return networkManagerCustom = NetworkManagerCustom.singleton as NetworkManagerCustom;
+        }
+    }
 
     private void Start() {
         volumeObject = GameManager.Instance.volumeObject;
@@ -119,7 +138,26 @@ public class KartController : NetworkBehaviour
     public float minMotorPitch = 0.5f;
 
     private void Update() {
+        if(isServer == true)
+        {
+            itemTimer += Time.deltaTime;
+            if(itemTimer >= maxItemTimer)
+            {
+                itemTimer = 0.0f;
+                RpcRefreshItems();
+            }
+        }
 
+        if(hasAuthority == true)
+        {
+            Attack();
+        }
+    }
+
+    [ClientRpc]
+    private void RpcRefreshItems()
+    {
+        ItemManager.Instance.RespawnItems();
     }
 
     private Vector3 lastPos = new Vector3();
@@ -225,9 +263,31 @@ public class KartController : NetworkBehaviour
         }
 
 
+        /*
+        if(hasAuthority)
+        {
+            //frontWheels.localEulerAngles = new Vector3(0, (inputManager.steerVal * 15), frontWheels.localEulerAngles.z);
+
+
+
+            Vector3 newVec = Vector3.RotateTowards(frontWheels.forward, sphere.velocity, 15.0f, 0.0f);
+            frontWheels.rotation = Quaternion.LookRotation(newVec);
+
+        } else
+        {
+            //frontWheels.localEulerAngles = new Vector3(0, sphere., frontWheels.localEulerAngles.z);
+            //frontWheels.rotation = Quaternion.LookRotation(sphere.velocity, Vector3.up);
+            Vector3 newVec = Vector3.RotateTowards(frontWheels.forward, sphere.velocity, 15.0f, 0.0f);
+            frontWheels.rotation = Quaternion.LookRotation(newVec);
+        }
+        */
+
+        
         frontWheels.localEulerAngles = new Vector3(0, (inputManager.steerVal * 15), frontWheels.localEulerAngles.z);
         frontWheels.localEulerAngles += new Vector3(0, 0, sphere.velocity.magnitude / 2);
         backWheels.localEulerAngles += new Vector3(0, 0, sphere.velocity.magnitude / 2);
+        
+        
 
 
         steeringWheel.localEulerAngles = new Vector3(-25, 90, ((inputManager.steerVal * 45)));
@@ -416,6 +476,46 @@ public class KartController : NetworkBehaviour
 
         kartModel.parent.DOLocalRotate(Vector3.zero, .5f).SetEase(Ease.OutBack);
 
+    }
+
+    private float attackVal;
+    private void Attack()
+    {
+        if(InputManager.Instance.attack == 0 && attackVal == 1)
+        {
+            attackVal = 0;
+        }
+
+        if(InputManager.Instance.attack != attackVal && InputManager.Instance.attack == 1)
+        {
+            attackVal = InputManager.Instance.attack;
+
+            Debug.Log("ATTACK");
+            switch (itemEquipped)
+            {
+                case 0:
+                    driftMode = 3;
+                    Boost();
+                    itemEquipped = -1;
+                    break;
+                case 1:
+                    CmdSpawnBanana();
+                    itemEquipped = -1;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+    }
+
+    [Command]
+    public void CmdSpawnBanana()
+    {
+        Vector3 newPos = baseObject.transform.position - baseObject.transform.forward;
+        newPos.x += 1.0f;
+        GameObject newBanana = Instantiate(NetworkManagerCustom.spawnPrefabs[1], newPos, Quaternion.identity);
+        NetworkServer.Spawn(newBanana);
     }
 
     private void Speed(float x) {
@@ -611,5 +711,55 @@ public class KartController : NetworkBehaviour
         driftMode = 0;
         first = false; second = false; third = false;
     }
+
+
+
+    public void ItemPickedUp(int _itemBox)
+    {
+        
+        CmdItemPickedUp(_itemBox);
+    }
+
+    [Command]
+    public void CmdItemPickedUp(int _itemBox)
+    {
+        
+        RpcItemPickUp(_itemBox);
+    }
+
+    [ClientRpc]
+    public void RpcItemPickUp(int _itemBox)
+    {
+        
+        ItemManager.Instance.PlayerPickedUpItem(_itemBox, this);
+    }
+
+
+    public void GotItem(int _itemType)
+    {
+        switch (_itemType)
+        {
+            case 0:
+                // Got Boost
+                itemEquipped = 0;
+                break;
+            case 1:
+                //Got Banana
+                itemEquipped = 1;
+                break;
+            default:
+                itemEquipped = 0;
+                break;
+        }
+    }
+
+    public void Respawn()
+    {
+        Debug.Log("Touched death zone");
+        transform.position = LevelManager.Instance.loadedLevelData.startTransforms[0].position;
+        baseObject.transform.rotation = LevelManager.Instance.loadedLevelData.startTransforms[0].rotation;
+        sphere.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+    }
+
 
 }

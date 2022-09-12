@@ -28,6 +28,7 @@ public class SoundManager : MonoBehaviour {
     */
 
     public GameObject jumpSound;
+    public GameObject itemSound;
 
     public AudioSource mainMenuMusic;
     public AudioSource defaultRaceMusic;
@@ -48,7 +49,7 @@ public class SoundManager : MonoBehaviour {
         GameObject soundObject = Instantiate(_sound, _position, Quaternion.identity);
         AudioSource audioSource = soundObject.GetComponent<AudioSource>();
         audioSource.pitch = Random.Range(_minPitch, _maxPitch);
-
+        
     }
 
 

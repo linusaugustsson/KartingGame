@@ -7,7 +7,7 @@ public class LevelManager : MonoBehaviour
     public static LevelManager Instance;
 
 
-
+    public List<GameObject> levelList = new List<GameObject>();
     public LevelData loadedLevelData;
 
 
@@ -19,6 +19,7 @@ public class LevelManager : MonoBehaviour
 
 
     private void Start() {
+        loadedLevelData = levelList[0].GetComponent<LevelData>();
         DontDestroyOnLoad(this.gameObject);
     }
 

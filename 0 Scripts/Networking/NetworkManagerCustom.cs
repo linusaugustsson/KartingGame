@@ -25,6 +25,11 @@ public class NetworkManagerCustom : NetworkManager
     public void StartGame() {
         //Debug.Log("In Start Game");
         // TODO: Add start game stuffs
+
+
+
+
+
         menuManager.CloseMainMenu();
         menuManager.menuState = MenuManager.MenuState.InGame;
 
@@ -33,6 +38,13 @@ public class NetworkManagerCustom : NetworkManager
         //LobbyController.Instance.localPlayerController.GetComponent<KartController>().ChangeCharacter();
         foreach (PlayerObjectController player in gamePlayers) {
             player.GetComponent<KartController>().ChangeCharacter();
+
+            
+        }
+
+        for (int i = 0; i < gamePlayers.Count; i++)
+        {
+            gamePlayers[i].transform.position = LevelManager.Instance.loadedLevelData.startTransforms[i].position;
         }
 
         SoundManager.Instance.defaultRaceMusic.Play();
@@ -174,6 +186,7 @@ public override void OnServerAddPlayer(NetworkConnection conn) {
         GamePlayerInstance.connectionID = conn.connectionId;
         GamePlayerInstance.playerIdNumber = gamePlayers.Count + 1;
         GamePlayerInstance.playerSteamID = (ulong)SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)SteamLobby.Instance.currentLobbyID, gamePlayers.Count);
+        GamePlayerInstance.playerStartingPos = gamePlayers.Count;
 
         NetworkServer.AddPlayerForConnection(conn, GamePlayerInstance.gameObject);
 

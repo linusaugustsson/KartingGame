@@ -144,4 +144,8 @@ public class PlayerObjectController : NetworkBehaviour
         NetworkManagerCustom.StartGame();
     }
 
+
+    
+
+
 }
